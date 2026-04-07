@@ -1,0 +1,156 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import FormField from "@/components/ui/FormField";
+import StatusMessage from "@/components/ui/StatusMessage";
+
+export default function AdminPage() {
+  const [activeTab, setActiveTab] = useState<"part" | "product">("part");
+  const [status, setStatus] = useState<{ type: "success" | "error" | ""; message: string }>({ type: "", message: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [productForm, setProductForm] = useState({ _id: "", name: "", description: "", imageUrl: "" });
+  const [partForm, setPartForm] = useState({
+    _id: "", compatibleProduct: "", sparePart: "", notes: "", availableAt: "", type: "", inStockStatus: "", eta: ""
+  });
+
+  const handleProductSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setStatus({ type: "", message: "" });
+    try {
+      const res = await fetch("/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...productForm, _id: productForm._id.toLowerCase() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to add product");
+      setStatus({ type: "success", message: "Product added successfully!" });
+      setProductForm({ _id: "", name: "", description: "", imageUrl: "" });
+    } catch (err: unknown) {
+      setStatus({ type: "error", message: err instanceof Error ? err.message : "An unknown error occurred" });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handlePartSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setStatus({ type: "", message: "" });
+    try {
+      const compatibleArray = partForm.compatibleProduct.split(",").map((p) => p.trim()).filter((p) => p !== "");
+      const res = await fetch("/api/parts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...partForm, compatibleProduct: compatibleArray }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to add spare part");
+      setStatus({ type: "success", message: "Spare part added successfully!" });
+      setPartForm({ _id: "", compatibleProduct: "", sparePart: "", notes: "", availableAt: "", type: "", inStockStatus: "", eta: "" });
+    } catch (err: unknown) {
+      setStatus({ type: "error", message: err instanceof Error ? err.message : "An unknown error occurred" });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <main className="min-h-screen bg-slate-50 p-6 md:p-8">
+      <div className="max-w-2xl mx-auto mt-8">
+
+        <div className="mb-8">
+          <Link href="/" className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 font-semibold mb-6 transition-colors">
+            ← Back to Storefront
+          </Link>
+          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Admin Dashboard</h1>
+          <p className="text-slate-500 mt-2">Add new devices and parts to the catalog.</p>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="flex space-x-2 mb-8 bg-slate-100 p-1 rounded-xl shadow-inner">
+          {(["part", "product"] as const).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => { setActiveTab(tab); setStatus({ type: "", message: "" }); }}
+              className={`flex-1 py-2.5 px-4 font-semibold text-sm transition-all rounded-lg cursor-pointer ${activeTab === tab ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"}`}
+            >
+              {tab === "part" ? "Add Part" : "Add Device"}
+            </button>
+          ))}
+        </div>
+
+        <StatusMessage type={status.type} message={status.message} />
+
+        {/* SPARE PART FORM */}
+        {activeTab === "part" && (
+          <form onSubmit={handlePartSubmit} className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200 space-y-5">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="md:w-1/3">
+                <FormField label="Part ID" value={partForm._id} onChange={(e) => setPartForm({ ...partForm, _id: e.target.value })} placeholder="e.g. 267" required />
+              </div>
+              <div className="md:w-2/3">
+                <FormField label="Part Name" value={partForm.sparePart} onChange={(e) => setPartForm({ ...partForm, sparePart: e.target.value })} placeholder="e.g. CD61 Bubble" required />
+              </div>
+            </div>
+
+            <FormField
+              label="Compatible Devices (Comma Separated)"
+              value={partForm.compatibleProduct}
+              onChange={(e) => setPartForm({ ...partForm, compatibleProduct: e.target.value })}
+              placeholder="e.g. CD61, CD62, CD61-E"
+              required
+              hint="Must exactly match existing Product names."
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField label="Part Type" value={partForm.type} onChange={(e) => setPartForm({ ...partForm, type: e.target.value })} placeholder="e.g. Bubble, Mount" required />
+              <FormField label="Location / Available At" value={partForm.availableAt} onChange={(e) => setPartForm({ ...partForm, availableAt: e.target.value })} placeholder="e.g. Warehouse Aisle 4" />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField label="Stock Status" value={partForm.inStockStatus} onChange={(e) => setPartForm({ ...partForm, inStockStatus: e.target.value })} placeholder="e.g. Yes, No, 5 Left" />
+              <FormField label="ETA (If out of stock)" value={partForm.eta} onChange={(e) => setPartForm({ ...partForm, eta: e.target.value })} placeholder="e.g. 5/23/2026" />
+            </div>
+
+            <FormField label="Notes" value={partForm.notes} onChange={(e) => setPartForm({ ...partForm, notes: e.target.value })} placeholder="Any specific instructions..." rows={2} />
+
+            <div className="pt-4 border-t border-slate-100 mt-6">
+              <button disabled={isSubmitting} type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-xl transition-colors disabled:opacity-50 shadow-sm cursor-pointer">
+                {isSubmitting ? "Saving Part..." : "Create Part"}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* PRODUCT FORM */}
+        {activeTab === "product" && (
+          <form onSubmit={handleProductSubmit} className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200 space-y-5">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="md:w-1/3">
+                <FormField label="Device ID" value={productForm._id} onChange={(e) => setProductForm({ ...productForm, _id: e.target.value })} placeholder="e.g. cd63" required hint="Used for URLs. No spaces." />
+              </div>
+              <div className="md:w-2/3">
+                <FormField label="Device Name" value={productForm.name} onChange={(e) => setProductForm({ ...productForm, name: e.target.value })} placeholder="e.g. CD63" required />
+              </div>
+            </div>
+
+            <FormField label="Device Category" value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} placeholder="e.g. Indoor Dome Camera" required />
+            <FormField label="Image URL" value={productForm.imageUrl} onChange={(e) => setProductForm({ ...productForm, imageUrl: e.target.value })} placeholder="https://..." type="url" required />
+
+            <div className="pt-4 border-t border-slate-100 mt-6">
+              <button disabled={isSubmitting} type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-xl transition-colors disabled:opacity-50 shadow-sm cursor-pointer">
+                {isSubmitting ? "Saving Device..." : "Create Device"}
+              </button>
+            </div>
+          </form>
+        )}
+
+      </div>
+    </main>
+  );
+}
