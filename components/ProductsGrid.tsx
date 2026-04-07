@@ -21,9 +21,24 @@ export default function ProductsGrid({
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<"all" | "parts">("all");
 
+  // Cart state
+  const [cartCount, setCartCount] = useState(0);
+  const [addedId, setAddedId] = useState<string | null>(null);
+
   useEffect(() => { setLocalProducts(products); }, [products]);
   useEffect(() => { setLocalParts(spareParts); }, [spareParts]);
   useEffect(() => { setSearchTerm(""); }, [viewMode]);
+
+  // Fetch cart count on mount
+  useEffect(() => {
+    fetch("/api/cart")
+      .then((res) => res.json())
+      .then((data) => {
+        const count = (data.items ?? []).reduce((sum: number, item: { quantity: number }) => sum + item.quantity, 0);
+        setCartCount(count);
+      })
+      .catch(() => {});
+  }, []);
 
   const filteredProducts = useMemo(() => {
     return localProducts.filter((p) =>
@@ -56,6 +71,24 @@ export default function ProductsGrid({
       if (res.ok) setLocalProducts((prev) => prev.filter((p) => p._id !== id));
       else alert("Failed to delete product. Please try again.");
     } catch (err) { console.error("Error deleting product:", err); }
+  };
+
+  const handleAddToCart = async (e: React.MouseEvent, part: ISparePart) => {
+    e.preventDefault();
+    try {
+      const res = await fetch("/api/cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ partId: part._id, partName: part.sparePart }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const count = (data.items ?? []).reduce((sum: number, item: { quantity: number }) => sum + item.quantity, 0);
+        setCartCount(count);
+        setAddedId(part._id as string);
+        setTimeout(() => setAddedId(null), 1500);
+      }
+    } catch (err) { console.error("Error adding to cart:", err); }
   };
 
   const handleDeletePart = async (e: React.MouseEvent, id: string) => {
@@ -101,6 +134,22 @@ export default function ProductsGrid({
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
+
+          {/* Cart Link */}
+          <Link
+            href="/cart"
+            className="relative w-full sm:w-auto px-5 py-2 bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 rounded-lg font-medium transition-colors shadow-sm text-center flex items-center justify-center gap-2 shrink-0"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            Cart
+            {cartCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 min-w-[1.25rem] h-5 px-1 bg-blue-600 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                {cartCount}
+              </span>
+            )}
+          </Link>
 
           {/* Admin Link */}
           <Link
@@ -181,7 +230,7 @@ export default function ProductsGrid({
                 <h3 className="text-lg font-bold text-gray-900 leading-tight">{part.sparePart}</h3>
               </div>
 
-              <div className="text-sm text-gray-600 flex flex-col gap-1 mt-2 mb-auto">
+              <div className="text-sm text-gray-600 flex flex-col gap-1 mt-2 mb-4">
                 <p><span className="font-semibold text-gray-700">Type:</span> {part.type || "N/A"}</p>
                 {part.compatibleProduct && part.compatibleProduct.length > 0 && (
                   <p><span className="font-semibold text-gray-700">Compatibility:</span> {part.compatibleProduct.join(", ")}</p>
@@ -191,6 +240,16 @@ export default function ProductsGrid({
                 {part.eta && <p><span className="font-semibold text-gray-700">ETA:</span> {part.eta}</p>}
                 {part.notes && <p className="mt-2 text-gray-500 italic line-clamp-2">{part.notes}</p>}
               </div>
+              <button
+                onClick={(e) => handleAddToCart(e, part)}
+                className={`mt-auto w-full py-2 text-sm font-semibold rounded-lg border transition-colors cursor-pointer ${
+                  addedId === part._id
+                    ? "bg-green-50 border-green-200 text-green-700"
+                    : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700"
+                }`}
+              >
+                {addedId === part._id ? "Added!" : "+ Add to Cart"}
+              </button>
             </div>
           ))}
           {filteredParts.length === 0 && (

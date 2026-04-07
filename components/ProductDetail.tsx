@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { IProduct } from "@/models/Product";
 import { ISparePart } from "@/models/SparePart";
@@ -13,6 +13,35 @@ interface ProductDetailProps {
 
 export default function ProductDetail({ product, parts }: ProductDetailProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [cartCount, setCartCount] = useState(0);
+  const [addedId, setAddedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/cart")
+      .then((res) => res.json())
+      .then((data) => {
+        const count = (data.items ?? []).reduce((sum: number, item: { quantity: number }) => sum + item.quantity, 0);
+        setCartCount(count);
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleAddToCart = async (part: ISparePart) => {
+    try {
+      const res = await fetch("/api/cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ partId: part._id, partName: part.sparePart }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const count = (data.items ?? []).reduce((sum: number, item: { quantity: number }) => sum + item.quantity, 0);
+        setCartCount(count);
+        setAddedId(part._id as string);
+        setTimeout(() => setAddedId(null), 1500);
+      }
+    } catch (err) { console.error("Error adding to cart:", err); }
+  };
 
   const filteredParts = parts.filter(
     (part) =>
@@ -41,14 +70,32 @@ export default function ProductDetail({ product, parts }: ProductDetailProps) {
                 <p className="text-gray-500 mt-1">{product.description}</p>
               </div>
             </div>
-            <div className="w-full md:w-72">
-              <input
-                type="text"
-                placeholder="Search parts by name or type..."
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all shadow-sm"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+            <div className="flex items-center gap-3">
+              {/* Cart Link */}
+              <Link
+                href="/cart"
+                className="relative px-4 py-2 bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 rounded-lg font-medium transition-colors shadow-sm flex items-center gap-2 shrink-0"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                Cart
+                {cartCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[1.25rem] h-5 px-1 bg-blue-600 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+              {/* Search */}
+              <div className="w-full md:w-72">
+                <input
+                  type="text"
+                  placeholder="Search parts by name or type..."
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all shadow-sm"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -65,6 +112,7 @@ export default function ProductDetail({ product, parts }: ProductDetailProps) {
                   <th className="px-6 py-4">In Stock</th>
                   <th className="px-6 py-4">ETA</th>
                   <th className="px-6 py-4">Notes</th>
+                  <th className="px-6 py-4"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -83,11 +131,23 @@ export default function ProductDetail({ product, parts }: ProductDetailProps) {
                       <td className="px-6 py-4 text-gray-500 text-sm max-w-xs truncate" title={part.notes}>
                         {part.notes || "-"}
                       </td>
+                      <td className="px-6 py-4 text-right">
+                        <button
+                          onClick={() => handleAddToCart(part)}
+                          className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors cursor-pointer whitespace-nowrap ${
+                            addedId === part._id
+                              ? "bg-green-50 border-green-200 text-green-700"
+                              : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700"
+                          }`}
+                        >
+                          {addedId === part._id ? "Added!" : "+ Add to Cart"}
+                        </button>
+                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                    <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
                       {parts.length === 0
                         ? `No spare parts are currently listed for the ${product.name}.`
                         : `No parts found matching "${searchTerm}".`}
