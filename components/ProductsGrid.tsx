@@ -135,6 +135,17 @@ export default function ProductsGrid({
             onChange={(e) => setSearchTerm(e.target.value)}
           />
 
+          {/* Orders Link */}
+          <Link
+            href="/orders"
+            className="w-full sm:w-auto px-5 py-2 bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 rounded-lg font-medium transition-colors shadow-sm text-center flex items-center justify-center gap-2 shrink-0"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            Orders
+          </Link>
+
           {/* Cart Link */}
           <Link
             href="/cart"
