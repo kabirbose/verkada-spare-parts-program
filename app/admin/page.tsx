@@ -112,7 +112,7 @@ export default function AdminPage() {
               onChange={(e) => setPartForm({ ...partForm, compatibleProduct: e.target.value })}
               placeholder="e.g. CD61, CD62, CD61-E"
               required
-              hint="Must exactly match existing Product names."
+              hint="Must exactly match existing Device names."
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

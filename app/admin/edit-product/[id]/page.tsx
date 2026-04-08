@@ -32,7 +32,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
       })
       .catch((err) => {
         console.error("Fetch error:", err);
-        alert("Could not load product data. Check the console.");
+        alert("Could not load device data. Check the console.");
         setLoading(false);
       });
   }, [id]);
@@ -46,15 +46,15 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
       headers: { "Content-Type": "application/json" },
     });
     if (res.ok) router.push("/");
-    else alert("Failed to update product");
+    else alert("Failed to update device.");
   };
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to permanently delete this model?")) return;
+    if (!confirm("Are you sure you want to permanently delete this device?")) return;
     try {
       const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
       if (res.ok) router.push("/");
-      else alert("Failed to delete product. Please try again.");
+      else alert("Failed to delete device. Please try again.");
     } catch (err) {
       console.error("Error deleting product:", err);
       alert("An error occurred while deleting.");
@@ -68,7 +68,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
   return (
     <div className="max-w-2xl mx-auto p-6 md:p-8 mt-8 bg-white rounded-2xl shadow-sm border border-slate-200">
-      <h1 className="text-2xl font-bold text-slate-800 mb-6 tracking-tight">Edit Model</h1>
+      <h1 className="text-2xl font-bold text-slate-800 mb-6 tracking-tight">Edit Device</h1>
 
       <form onSubmit={handleSubmit} className="space-y-5">
 
