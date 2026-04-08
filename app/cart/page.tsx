@@ -149,7 +149,7 @@ export default function CartPage() {
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-16 text-center">
             <p className="text-slate-400 text-lg mb-4">Your cart is empty.</p>
             <Link href="/" className="inline-flex px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors">
-              Browse Devices
+              Browse Products
             </Link>
           </div>
         ) : (
