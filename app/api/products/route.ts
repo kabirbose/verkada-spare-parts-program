@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import { Product } from "@/models/Product";
 
+export async function GET() {
+  await dbConnect();
+  const products = await Product.find({}).lean();
+  return NextResponse.json(products.map((p) => ({ ...p, _id: p._id.toString() })));
+}
+
 export async function POST(request: Request) {
   try {
     await dbConnect();

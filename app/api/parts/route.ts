@@ -21,17 +21,8 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET() {
   await dbConnect();
-  const { id } = await params;
-  const part = await SparePart.findById(id);
-  return NextResponse.json(part || {}, { status: part ? 200 : 404 });
-}
-
-export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  await dbConnect();
-  const { id } = await params;
-  const body = await request.json();
-  const updated = await SparePart.findByIdAndUpdate(id, body, { new: true });
-  return NextResponse.json(updated);
+  const parts = await SparePart.find({}).lean();
+  return NextResponse.json(parts.map((p) => ({ ...p, _id: p._id.toString() })));
 }

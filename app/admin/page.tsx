@@ -2,13 +2,63 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Papa from "papaparse";
 import FormField from "@/components/ui/FormField";
 import StatusMessage from "@/components/ui/StatusMessage";
+import CsvImport from "@/components/CsvImport";
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<"part" | "product">("part");
   const [status, setStatus] = useState<{ type: "success" | "error" | ""; message: string }>({ type: "", message: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [exporting, setExporting] = useState<"device" | "part" | null>(null);
+
+  const handleExport = async (type: "device" | "part") => {
+    setExporting(type);
+    try {
+      const res  = await fetch(type === "device" ? "/api/products" : "/api/parts");
+      const data = await res.json();
+
+      let rows: Record<string, string>[];
+      let filename: string;
+
+      if (type === "device") {
+        rows = data.map((d: { _id: string; name: string; description: string; imageUrl: string }) => ({
+          "Device ID":       d._id,
+          "Device Name":     d.name,
+          "Device Category": d.description,
+          "Image URL":       d.imageUrl,
+        }));
+        filename = "devices-export.csv";
+      } else {
+        rows = data.map((p: { _id: string; sparePart: string; compatibleProduct?: string[]; type: string; availableAt?: string; inStockStatus?: string; eta?: string; notes?: string }) => ({
+          "Part ID":            p._id,
+          "Part Name":          p.sparePart,
+          "Compatible Devices": (p.compatibleProduct ?? []).join(", "),
+          "Part Type":          p.type,
+          "Location":           p.availableAt ?? "",
+          "Stock Status":       p.inStockStatus ?? "",
+          "ETA":                p.eta ?? "",
+          "Notes":              p.notes ?? "",
+        }));
+        filename = "parts-export.csv";
+      }
+
+      const csv  = Papa.unparse(rows);
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href     = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert("Export failed. Please try again.");
+    } finally {
+      setExporting(null);
+    }
+  };
 
   const [productForm, setProductForm] = useState({ _id: "", name: "", description: "", imageUrl: "" });
   const [partForm, setPartForm] = useState({
@@ -78,6 +128,55 @@ export default function AdminPage() {
           <p className="text-slate-500 mt-2">Add new devices and parts to the catalog.</p>
         </div>
 
+        {/* Export */}
+        <div className="mb-8 bg-white border border-slate-200 rounded-2xl shadow-sm p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-sm font-semibold text-slate-700">Export Catalog</p>
+              <p className="text-xs text-slate-400 mt-0.5">Download all devices or parts as a CSV file.</p>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+          </div>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => handleExport("device")}
+              disabled={exporting !== null}
+              className="flex-1 flex items-center justify-center gap-2 py-2 px-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-sm font-semibold rounded-xl transition-colors disabled:opacity-50 cursor-pointer"
+            >
+              {exporting === "device" ? (
+                "Exporting…"
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Export All Devices
+                </>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleExport("part")}
+              disabled={exporting !== null}
+              className="flex-1 flex items-center justify-center gap-2 py-2 px-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-sm font-semibold rounded-xl transition-colors disabled:opacity-50 cursor-pointer"
+            >
+              {exporting === "part" ? (
+                "Exporting…"
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Export All Parts
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
         {/* Tab Navigation */}
         <div className="flex space-x-2 mb-8 bg-slate-100 p-1 rounded-xl shadow-inner">
           {(["part", "product"] as const).map((tab) => (
@@ -96,6 +195,7 @@ export default function AdminPage() {
 
         {/* SPARE PART FORM */}
         {activeTab === "part" && (
+          <>
           <form onSubmit={handlePartSubmit} className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200 space-y-5">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="md:w-1/3">
@@ -133,10 +233,13 @@ export default function AdminPage() {
               </button>
             </div>
           </form>
+          <CsvImport type="part" />
+          </>
         )}
 
         {/* PRODUCT FORM */}
         {activeTab === "product" && (
+          <>
           <form onSubmit={handleProductSubmit} className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200 space-y-5">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="md:w-1/3">
@@ -156,6 +259,8 @@ export default function AdminPage() {
               </button>
             </div>
           </form>
+          <CsvImport type="device" />
+          </>
         )}
 
       </div>
