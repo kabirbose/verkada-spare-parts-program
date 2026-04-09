@@ -139,23 +139,6 @@ export default function AdminPage() {
           <div className="flex gap-3">
             <button
               type="button"
-              onClick={() => handleExport("device")}
-              disabled={exporting !== null}
-              className="flex-1 flex items-center justify-center gap-2 py-2 px-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-sm font-semibold rounded-xl transition-colors disabled:opacity-50 cursor-pointer"
-            >
-              {exporting === "device" ? (
-                "Exporting…"
-              ) : (
-                <>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                  Export All Devices
-                </>
-              )}
-            </button>
-            <button
-              type="button"
               onClick={() => handleExport("part")}
               disabled={exporting !== null}
               className="flex-1 flex items-center justify-center gap-2 py-2 px-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-sm font-semibold rounded-xl transition-colors disabled:opacity-50 cursor-pointer"
@@ -168,6 +151,23 @@ export default function AdminPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                   </svg>
                   Export All Parts
+                </>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleExport("device")}
+              disabled={exporting !== null}
+              className="flex-1 flex items-center justify-center gap-2 py-2 px-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-sm font-semibold rounded-xl transition-colors disabled:opacity-50 cursor-pointer"
+            >
+              {exporting === "device" ? (
+                "Exporting…"
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Export All Devices
                 </>
               )}
             </button>
