@@ -250,6 +250,15 @@ export default function ProductsGrid({
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto items-center flex-wrap xl:flex-nowrap">
+          {/* Search Input */}
+          <input
+            type="text"
+            placeholder={viewMode === "all" ? "Search devices..." : "Search spare parts..."}
+            className="w-full sm:w-72 px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all shadow-sm"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+
           {/* View Mode Toggle + Select button (grouped) */}
           <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
             <div className="flex bg-slate-100 p-1 rounded-lg shadow-inner flex-1 sm:flex-none">
@@ -287,23 +296,6 @@ export default function ProductsGrid({
               )}
             </button>
           </div>
-
-          {/* Search Input */}
-          <input
-            type="text"
-            placeholder={viewMode === "all" ? "Search devices..." : "Search spare parts..."}
-            className="w-full sm:w-72 px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all shadow-sm"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-
-          {/* Orders Link */}
-          <Link href="/orders" className="w-full sm:w-auto px-5 py-2 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 rounded-lg font-medium transition-colors shadow-sm text-center flex items-center justify-center gap-2 shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-            Orders
-          </Link>
 
           {/* Cart Link */}
           <Link href="/cart" className="relative w-full sm:w-auto px-5 py-2 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 rounded-lg font-medium transition-colors shadow-sm text-center flex items-center justify-center gap-2 shrink-0">
