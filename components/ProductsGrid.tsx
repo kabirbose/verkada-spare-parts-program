@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Papa from "papaparse";
 import { IProduct } from "@/models/Product";
 import { ISparePart } from "@/models/SparePart";
 import CardActionButtons from "@/components/ui/CardActionButtons";
@@ -217,6 +218,45 @@ export default function ProductsGrid({
 
     setBulkDeleting(false);
     exitSelectMode();
+  };
+
+  const handleBulkExport = () => {
+    const ids = selectedIds;
+    let rows: Record<string, string>[];
+    let filename: string;
+
+    if (viewMode === "all") {
+      const selected = localProducts.filter((p) => ids.has(p._id as string));
+      rows = selected.map((d) => ({
+        "Device ID":       d._id as string,
+        "Device Name":     d.name,
+        "Device Category": d.description,
+        "Image URL":       d.imageUrl,
+      }));
+      filename = "devices-export.csv";
+    } else {
+      const selected = localParts.filter((p) => ids.has(p._id as string));
+      rows = selected.map((p) => ({
+        "Part ID":            p._id as string,
+        "Part Name":          p.sparePart,
+        "Compatible Devices": (p.compatibleProduct ?? []).join(", "),
+        "Part Type":          p.type,
+        "Location":           p.availableAt ?? "",
+        "Stock Status":       p.inStockStatus ?? "",
+        "ETA":                p.eta ?? "",
+        "Notes":              p.notes ?? "",
+      }));
+      filename = "parts-export.csv";
+    }
+
+    const csv  = Papa.unparse(rows);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href     = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   // ── Shared checkbox indicator ────────────────────────────────────────────
@@ -504,6 +544,13 @@ export default function ProductsGrid({
 
             {selectedIds.size > 0 && (
               <>
+                <div className="w-px h-4 bg-slate-700" />
+                <button
+                  onClick={handleBulkExport}
+                  className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer"
+                >
+                  Export {selectedIds.size}
+                </button>
                 <div className="w-px h-4 bg-slate-700" />
                 <button
                   onClick={handleBulkDelete}
