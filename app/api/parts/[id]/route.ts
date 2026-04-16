@@ -1,75 +1,60 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
-import { SparePart } from "@/models/SparePart"; 
+import { SparePart } from "@/models/SparePart";
 
-// --- GET: Fetch a single part to populate the Edit Form ---
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+type Params = { params: Promise<{ id: string }> };
+
+// GET /api/parts/[id] — fetch a single spare part (used by the edit form)
+export async function GET(_req: Request, { params }: Params) {
   try {
     await dbConnect();
     const { id } = await params;
-    
+
     const part = await SparePart.findById(id);
-    
     if (!part) {
       return NextResponse.json({ message: "Part not found" }, { status: 404 });
     }
-    
-    return NextResponse.json(part, { status: 200 });
+
+    return NextResponse.json(part);
   } catch (error) {
     console.error("Error fetching part:", error);
     return NextResponse.json({ message: "Server error" }, { status: 500 });
   }
 }
 
-// --- PUT: Save edits made in the Edit Form ---
-export async function PUT(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+// PUT /api/parts/[id] — update an existing spare part
+export async function PUT(request: Request, { params }: Params) {
   try {
     await dbConnect();
     const { id } = await params;
     const body = await request.json();
-    
-    const updatedPart = await SparePart.findByIdAndUpdate(id, body, { new: true });
-    
-    if (!updatedPart) {
+
+    const updated = await SparePart.findByIdAndUpdate(id, body, { new: true });
+    if (!updated) {
       return NextResponse.json({ message: "Part not found" }, { status: 404 });
     }
 
-    return NextResponse.json(updatedPart, { status: 200 });
+    return NextResponse.json(updated);
   } catch (error) {
     console.error("Error updating part:", error);
     return NextResponse.json({ message: "Server error" }, { status: 500 });
   }
 }
 
-// --- DELETE: Delete a part (Your existing code) ---
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> } 
-) {
+// DELETE /api/parts/[id] — permanently delete a spare part
+export async function DELETE(_req: Request, { params }: Params) {
   try {
     await dbConnect();
     const { id } = await params;
 
-    if (!id) {
-      return NextResponse.json({ message: "Part ID is required" }, { status: 400 });
-    }
-
-    const deletedPart = await SparePart.findByIdAndDelete(id);
-
-    if (!deletedPart) {
+    const deleted = await SparePart.findByIdAndDelete(id);
+    if (!deleted) {
       return NextResponse.json({ message: "Part not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ message: "Part deleted successfully" }, { status: 200 });
-
+    return NextResponse.json({ message: "Part deleted successfully" });
   } catch (error) {
-    console.error("Error deleting part from database:", error);
-    return NextResponse.json({ message: "An error occurred while deleting the part" }, { status: 500 });
+    console.error("Error deleting part:", error);
+    return NextResponse.json({ message: "Server error" }, { status: 500 });
   }
 }

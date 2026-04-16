@@ -156,7 +156,7 @@ export default function CsvImport({ type }: { type: ImportType }) {
     Papa.parse<Record<string, string>>(file, {
       header:         true,
       skipEmptyLines: true,
-      complete(parsed) {
+      complete(parsed: Papa.ParseResult<Record<string, string>>) {
         // Validate that all expected columns are present
         const fileHeaders = parsed.meta.fields ?? [];
         const missing = cfg.headers.filter((h) => !fileHeaders.includes(h));

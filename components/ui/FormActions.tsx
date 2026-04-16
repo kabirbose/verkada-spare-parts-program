@@ -4,9 +4,10 @@ interface FormActionsProps {
   onDelete: () => void;
 }
 
+// Shared footer row for edit forms: Save / Cancel on the left, Delete on the right.
 export default function FormActions({ onDelete }: FormActionsProps) {
   return (
-    <div className="flex justify-between items-center pt-4 border-t border-slate-100 mt-6">
+    <div className="flex justify-between items-center pt-4 mt-6 border-t border-slate-100">
       <div className="flex gap-3">
         <button
           type="submit"
@@ -21,6 +22,7 @@ export default function FormActions({ onDelete }: FormActionsProps) {
           Cancel
         </Link>
       </div>
+
       <button
         type="button"
         onClick={onDelete}

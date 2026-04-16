@@ -12,11 +12,14 @@ interface FormFieldProps {
   rows?: number;
 }
 
-const activeClass =
-  "w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all text-slate-700 placeholder:text-slate-300";
+const inputClass =
+  "w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg " +
+  "focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 " +
+  "outline-none transition-all text-slate-700 placeholder:text-slate-300";
 
 const disabledClass =
-  "w-full px-4 py-2 bg-slate-100 border border-slate-200 rounded-lg text-slate-400 cursor-not-allowed outline-none";
+  "w-full px-4 py-2 bg-slate-100 border border-slate-200 rounded-lg " +
+  "text-slate-400 cursor-not-allowed outline-none";
 
 export default function FormField({
   label,
@@ -34,6 +37,7 @@ export default function FormField({
       <label className="block text-xs font-semibold text-slate-500 mb-1 uppercase tracking-wider">
         {label}
       </label>
+
       {rows ? (
         <textarea
           value={value}
@@ -41,7 +45,7 @@ export default function FormField({
           placeholder={placeholder}
           required={required}
           rows={rows}
-          className={`${activeClass} resize-none`}
+          className={`${inputClass} resize-none`}
         />
       ) : (
         <input
@@ -51,11 +55,15 @@ export default function FormField({
           placeholder={placeholder}
           required={required}
           disabled={disabled}
-          title={disabled ? "MongoDB IDs cannot be changed after creation." : undefined}
-          className={disabled ? disabledClass : activeClass}
+          // Tooltip clarifies why IDs are locked after creation
+          title={disabled ? "This ID cannot be changed after creation." : undefined}
+          className={disabled ? disabledClass : inputClass}
         />
       )}
-      {hint && <p className="text-xs text-slate-400 mt-1.5 font-medium">{hint}</p>}
+
+      {hint && (
+        <p className="text-xs text-slate-400 mt-1.5 font-medium">{hint}</p>
+      )}
     </div>
   );
 }
