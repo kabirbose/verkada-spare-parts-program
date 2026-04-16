@@ -4,6 +4,7 @@ import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import FormField from "@/components/ui/FormField";
 import FormActions from "@/components/ui/FormActions";
+import ImageUploadField from "@/components/ui/ImageUploadField";
 
 export default function EditPartPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -18,6 +19,7 @@ export default function EditPartPage({ params }: { params: Promise<{ id: string 
     eta: "",
     availableAt: "",
     notes: "",
+    imageUrl: "",
   });
   const [loading, setLoading] = useState(true);
 
@@ -40,6 +42,7 @@ export default function EditPartPage({ params }: { params: Promise<{ id: string 
           eta: data.eta || "",
           availableAt: data.availableAt || "",
           notes: data.notes || "",
+          imageUrl: data.imageUrl || "",
         });
         setLoading(false);
       })
@@ -116,6 +119,11 @@ export default function EditPartPage({ params }: { params: Promise<{ id: string 
           <FormField label="Location / Available At" value={formData.availableAt} onChange={update("availableAt")} placeholder="e.g., Aisle 4, Bin B" />
           <FormField label="Notes" value={formData.notes} onChange={update("notes")} placeholder="Any additional info..." />
         </div>
+
+        <ImageUploadField
+          value={formData.imageUrl}
+          onChange={(url) => setFormData({ ...formData, imageUrl: url })}
+        />
 
         <FormActions onDelete={handleDelete} />
       </form>

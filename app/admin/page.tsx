@@ -6,6 +6,7 @@ import Papa from "papaparse";
 import FormField from "@/components/ui/FormField";
 import StatusMessage from "@/components/ui/StatusMessage";
 import CsvImport from "@/components/CsvImport";
+import ImageUploadField from "@/components/ui/ImageUploadField";
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<"part" | "product">("part");
@@ -62,7 +63,7 @@ export default function AdminPage() {
 
   const [productForm, setProductForm] = useState({ _id: "", name: "", description: "", imageUrl: "" });
   const [partForm, setPartForm] = useState({
-    _id: "", compatibleProduct: "", sparePart: "", notes: "", availableAt: "", type: "", inStockStatus: "", eta: ""
+    _id: "", compatibleProduct: "", sparePart: "", notes: "", availableAt: "", type: "", inStockStatus: "", eta: "", imageUrl: ""
   });
 
   const handleProductSubmit = async (e: React.FormEvent) => {
@@ -100,7 +101,7 @@ export default function AdminPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to add spare part");
       setStatus({ type: "success", message: "Spare part added successfully!" });
-      setPartForm({ _id: "", compatibleProduct: "", sparePart: "", notes: "", availableAt: "", type: "", inStockStatus: "", eta: "" });
+      setPartForm({ _id: "", compatibleProduct: "", sparePart: "", notes: "", availableAt: "", type: "", inStockStatus: "", eta: "", imageUrl: "" });
     } catch (err: unknown) {
       setStatus({ type: "error", message: err instanceof Error ? err.message : "An unknown error occurred" });
     } finally {
@@ -224,6 +225,11 @@ export default function AdminPage() {
 
             <FormField label="Notes" value={partForm.notes} onChange={(e) => setPartForm({ ...partForm, notes: e.target.value })} placeholder="Any specific instructions..." rows={2} />
 
+            <ImageUploadField
+              value={partForm.imageUrl}
+              onChange={(url) => setPartForm({ ...partForm, imageUrl: url })}
+            />
+
             <div className="pt-4 border-t border-slate-100 mt-6">
               <button disabled={isSubmitting} type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-xl transition-colors disabled:opacity-50 shadow-sm cursor-pointer">
                 {isSubmitting ? "Saving Part..." : "Create Part"}
@@ -248,7 +254,10 @@ export default function AdminPage() {
             </div>
 
             <FormField label="Device Category" value={productForm.description} onChange={(e) => setProductForm({ ...productForm, description: e.target.value })} placeholder="e.g. Indoor Dome Camera" required />
-            <FormField label="Image URL" value={productForm.imageUrl} onChange={(e) => setProductForm({ ...productForm, imageUrl: e.target.value })} placeholder="https://..." type="url" required />
+            <ImageUploadField
+              value={productForm.imageUrl}
+              onChange={(url) => setProductForm({ ...productForm, imageUrl: url })}
+            />
 
             <div className="pt-4 border-t border-slate-100 mt-6">
               <button disabled={isSubmitting} type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-xl transition-colors disabled:opacity-50 shadow-sm cursor-pointer">

@@ -393,8 +393,25 @@ export default function ProductsGrid({
                           : "border-slate-200 hover:border-blue-400"
                       }`}
                     >
-                      <div className="aspect-video w-full bg-slate-100 overflow-hidden relative shrink-0">
-                        <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      <div className="aspect-video w-full bg-slate-100 overflow-hidden relative shrink-0 flex items-center justify-center">
+                        {product.imageUrl ? (
+                          <img
+                            src={product.imageUrl}
+                            alt={product.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            onError={(e) => {
+                              const target = e.currentTarget;
+                              target.style.display = "none";
+                              target.nextElementSibling?.classList.remove("hidden");
+                            }}
+                          />
+                        ) : null}
+                        <div className={`${product.imageUrl ? "hidden" : ""} absolute inset-0 flex items-center justify-center`}>
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                        </div>
                         {selectMode ? (
                           <Checkbox id={id} />
                         ) : (
@@ -446,7 +463,7 @@ export default function ProductsGrid({
                 key={id}
                 data-selectable-id={id}
                 onClick={() => { if (selectMode) toggleSelect(id); }}
-                className={`group bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition-all duration-200 flex flex-col relative p-5 ${
+                className={`group bg-white rounded-xl shadow-sm border overflow-hidden hover:shadow-md transition-all duration-200 flex flex-col relative ${
                   selectMode
                     ? selected
                       ? "border-blue-500 ring-2 ring-blue-200 cursor-pointer"
@@ -454,50 +471,77 @@ export default function ProductsGrid({
                     : "border-slate-200 hover:border-blue-400"
                 }`}
               >
-                {selectMode ? (
-                  <Checkbox id={id} />
-                ) : (
-                  <CardActionButtons
-                    onEdit={(e) => { e.preventDefault(); router.push(`/admin/edit-part/${id}`); }}
-                    onDelete={(e) => handleDeletePart(e, id)}
-                    editLabel="Edit Spare Part"
-                    deleteLabel="Delete Spare Part"
-                  />
-                )}
-
-                <div className={`flex items-center gap-3 mb-3 pr-16 ${selectMode ? "pl-7" : ""}`}>
-                  <div className="p-2 bg-blue-50 text-blue-600 rounded-lg shrink-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
+                {/* Image at top — outside the padded content area */}
+                {part.imageUrl ? (
+                  <div className="aspect-video w-full bg-slate-100 overflow-hidden relative shrink-0">
+                    <img
+                      src={part.imageUrl}
+                      alt={part.sparePart}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    {selectMode ? (
+                      <Checkbox id={id} />
+                    ) : (
+                      <CardActionButtons
+                        withBackground
+                        onEdit={(e) => { e.preventDefault(); router.push(`/admin/edit-part/${id}`); }}
+                        onDelete={(e) => handleDeletePart(e, id)}
+                        editLabel="Edit Spare Part"
+                        deleteLabel="Delete Spare Part"
+                      />
+                    )}
                   </div>
-                  <h3 className="text-lg font-bold text-slate-900 leading-tight">{part.sparePart}</h3>
-                </div>
-
-                <div className="text-sm text-slate-600 flex flex-col gap-1 mt-2 mb-4">
-                  <p><span className="font-semibold text-slate-700">Type:</span> {part.type || "N/A"}</p>
-                  {part.compatibleProduct && part.compatibleProduct.length > 0 && (
-                    <p><span className="font-semibold text-slate-700">Compatible Devices:</span> {part.compatibleProduct.join(", ")}</p>
-                  )}
-                  <p><span className="font-semibold text-slate-700">Location:</span> {part.availableAt || "N/A"}</p>
-                  <p><span className="font-semibold text-slate-700">In Stock:</span> {part.inStockStatus || "Unknown"}</p>
-                  {part.eta && <p><span className="font-semibold text-slate-700">ETA:</span> {part.eta}</p>}
-                  {part.notes && <p className="mt-2 text-slate-500 italic line-clamp-2">{part.notes}</p>}
-                </div>
-
-                {!selectMode && (
-                  <button
-                    onClick={(e) => handleAddToCart(e, part)}
-                    className={`mt-auto w-full py-2 text-sm font-semibold rounded-lg border transition-colors cursor-pointer ${
-                      addedId === id
-                        ? "bg-green-50 border-green-200 text-green-700"
-                        : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700"
-                    }`}
-                  >
-                    {addedId === id ? "Added!" : "+ Add to Cart"}
-                  </button>
+                ) : (
+                  selectMode ? (
+                    <Checkbox id={id} />
+                  ) : (
+                    <CardActionButtons
+                      onEdit={(e) => { e.preventDefault(); router.push(`/admin/edit-part/${id}`); }}
+                      onDelete={(e) => handleDeletePart(e, id)}
+                      editLabel="Edit Spare Part"
+                      deleteLabel="Delete Spare Part"
+                    />
+                  )
                 )}
+
+                {/* Padded content */}
+                <div className="p-5 flex flex-col flex-grow">
+                  <div className={`flex items-center gap-3 mb-3 pr-16 ${selectMode && !part.imageUrl ? "pl-7" : ""}`}>
+                    {!part.imageUrl && (
+                      <div className="p-2 bg-blue-50 text-blue-600 rounded-lg shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                      </div>
+                    )}
+                    <h3 className="text-lg font-bold text-slate-900 leading-tight">{part.sparePart}</h3>
+                  </div>
+
+                  <div className="text-sm text-slate-600 flex flex-col gap-1 mt-2 mb-4">
+                    <p><span className="font-semibold text-slate-700">Type:</span> {part.type || "N/A"}</p>
+                    {part.compatibleProduct && part.compatibleProduct.length > 0 && (
+                      <p><span className="font-semibold text-slate-700">Compatible Devices:</span> {part.compatibleProduct.join(", ")}</p>
+                    )}
+                    <p><span className="font-semibold text-slate-700">Location:</span> {part.availableAt || "N/A"}</p>
+                    <p><span className="font-semibold text-slate-700">In Stock:</span> {part.inStockStatus || "Unknown"}</p>
+                    {part.eta && <p><span className="font-semibold text-slate-700">ETA:</span> {part.eta}</p>}
+                    {part.notes && <p className="mt-2 text-slate-500 italic line-clamp-2">{part.notes}</p>}
+                  </div>
+
+                  {!selectMode && (
+                    <button
+                      onClick={(e) => handleAddToCart(e, part)}
+                      className={`mt-auto w-full py-2 text-sm font-semibold rounded-lg border transition-colors cursor-pointer ${
+                        addedId === id
+                          ? "bg-green-50 border-green-200 text-green-700"
+                          : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700"
+                      }`}
+                    >
+                      {addedId === id ? "Added!" : "+ Add to Cart"}
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })}

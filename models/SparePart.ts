@@ -1,7 +1,7 @@
 import mongoose, { Schema, model, models } from "mongoose";
 
 export interface ISparePart {
-  _id: string; 
+  _id: string;
   compatibleProduct: string[];
   sparePart: string;
   notes: string;
@@ -9,6 +9,7 @@ export interface ISparePart {
   type: string;
   inStockStatus: string;
   eta: string;
+  imageUrl: string;
 }
 
 const SparePartSchema = new Schema<ISparePart>({
@@ -20,6 +21,7 @@ const SparePartSchema = new Schema<ISparePart>({
   type: { type: String },
   inStockStatus: { type: String },
   eta: { type: String },
+  imageUrl: { type: String },
 });
 
 export const SparePart = models.SparePart || model<ISparePart>("SparePart", SparePartSchema);

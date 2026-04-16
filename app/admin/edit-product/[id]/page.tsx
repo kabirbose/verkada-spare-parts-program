@@ -4,6 +4,7 @@ import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import FormField from "@/components/ui/FormField";
 import FormActions from "@/components/ui/FormActions";
+import ImageUploadField from "@/components/ui/ImageUploadField";
 
 export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -83,17 +84,10 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
         <FormField label="Device Category" value={formData.description} onChange={update("description")} required />
 
-        {/* Image Input and Preview */}
-        <div className="flex gap-4 items-start">
-          <div className="flex-grow">
-            <FormField label="Image URL" value={formData.imageUrl} onChange={update("imageUrl")} required />
-          </div>
-          {formData.imageUrl && (
-            <div className="shrink-0 w-24 h-24 mt-5 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center p-1 overflow-hidden">
-              <img src={formData.imageUrl} alt="Preview" className="max-h-full max-w-full object-contain mix-blend-multiply" />
-            </div>
-          )}
-        </div>
+        <ImageUploadField
+          value={formData.imageUrl}
+          onChange={(url) => setFormData({ ...formData, imageUrl: url })}
+        />
 
         <FormActions onDelete={handleDelete} />
       </form>
