@@ -1,20 +1,25 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
-// The sign-in page must be public — otherwise unauthenticated users get
-// redirected to /sign-in, which redirects to /sign-in, infinitely.
+// ── Public routes ──────────────────────────────────────────────────────────
+// /sign-in and its catch-all sub-paths must remain public.
+// Without this, unauthenticated requests loop: / → /sign-in → /sign-in → …
 const isPublicRoute = createRouteMatcher(["/sign-in(.*)"]);
 
+// ── Auth enforcement ───────────────────────────────────────────────────────
+// Every route that is not explicitly public is protected. Unauthenticated
+// visitors are redirected to /sign-in automatically by auth.protect().
 export default clerkMiddleware(async (auth, req) => {
   if (!isPublicRoute(req)) {
     await auth.protect();
   }
 });
 
+// ── Matcher ────────────────────────────────────────────────────────────────
+// Run on all application paths and API routes; skip Next.js internals and
+// static assets so they are never blocked by auth.
 export const config = {
   matcher: [
-    // Run on all paths except Next.js internals and static assets
     "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jte?|svgz?|ttf|otf|woff2?|png|jpe?g|gif|webp|ico)).*)",
-    // Always run for API routes
     "/(api|trpc)(.*)",
   ],
 };

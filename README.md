@@ -1,6 +1,6 @@
 # Spare Parts Program
 
-An internal web application for managing, browsing, and requesting spare parts for devices. Built with Next.js, MongoDB, and Tailwind CSS.
+An internal web application for managing, browsing, and requesting spare parts for devices. Built with Next.js, MongoDB, Tailwind CSS, and Clerk for authentication.
 
 ---
 
@@ -10,6 +10,11 @@ An internal web application for managing, browsing, and requesting spare parts f
 - [Prerequisites](#prerequisites)
 - [Development Setup](#development-setup)
 - [Environment Variables](#environment-variables)
+- [Authentication Setup](#authentication-setup)
+  - [1. Create a Clerk Application](#1-create-a-clerk-application)
+  - [2. Enable Google Sign-In (Required)](#2-enable-google-sign-in-required)
+  - [3. Enable Slack Sign-In (Optional)](#3-enable-slack-sign-in-optional)
+  - [4. Add Clerk Keys to .env.local](#4-add-clerk-keys-to-envlocal)
 - [Project Structure](#project-structure)
 - [Features](#features)
   - [Storefront — Devices View](#storefront--devices-view)
@@ -38,6 +43,7 @@ An internal web application for managing, browsing, and requesting spare parts f
 | Framework | Next.js 16 (App Router) |
 | Language | TypeScript 5 |
 | Database | MongoDB via Mongoose 9 |
+| Authentication | Clerk 7 |
 | Styling | Tailwind CSS 4 |
 | CSV parsing | PapaParse 5 |
 | Font | Geist (via `next/font`) |
@@ -49,6 +55,8 @@ An internal web application for managing, browsing, and requesting spare parts f
 - **Node.js** 18 or later
 - **npm** 9 or later
 - A **MongoDB** instance — either a free [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) cluster or a locally running instance
+- A **Clerk** account — sign up free at [clerk.com](https://clerk.com)
+- A **Google Cloud** project with OAuth 2.0 credentials (for Google sign-in)
 
 ---
 
@@ -69,15 +77,11 @@ npm install
 
 ### 3. Configure environment variables
 
-Create a `.env.local` file in the project root:
-
 ```bash
-cp .env.example .env.local   # if an example file exists
-# or create it manually:
 touch .env.local
 ```
 
-Open `.env.local` and add your MongoDB connection string (see [Environment Variables](#environment-variables) below).
+See [Environment Variables](#environment-variables) and [Authentication Setup](#authentication-setup) for the values to add.
 
 ### 4. Start the development server
 
@@ -85,7 +89,7 @@ Open `.env.local` and add your MongoDB connection string (see [Environment Varia
 npm run dev
 ```
 
-The app will be available at [http://localhost:3000](http://localhost:3000).
+The app will be available at [http://localhost:3000](http://localhost:3000). You will be redirected to the Clerk sign-in page on first load.
 
 ### Other scripts
 
@@ -96,6 +100,8 @@ The app will be available at [http://localhost:3000](http://localhost:3000).
 | `npm run start` | Run the production build locally |
 | `npm run lint` | Run ESLint across the codebase |
 
+> **Note:** The `dev` and `start` scripts include `NODE_OPTIONS='--max-http-header-size=32768'`. This is required because Clerk session tokens stored in cookies can exceed Node's default 8 KB header limit, causing HTTP 431 errors.
+
 ---
 
 ## Environment Variables
@@ -103,13 +109,67 @@ The app will be available at [http://localhost:3000](http://localhost:3000).
 Create a `.env.local` file in the project root with the following variables:
 
 ```env
-# Required — MongoDB connection string
+# ── MongoDB ──────────────────────────────────────────────────────────────────
 # Atlas example:  mongodb+srv://<user>:<password>@<cluster>.mongodb.net/<dbname>
 # Local example:  mongodb://localhost:27017/spare-parts
 MONGODB_URI=mongodb+srv://...
+
+# ── Clerk ────────────────────────────────────────────────────────────────────
+# Found at: Clerk Dashboard → Your App → API Keys
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
+
+# Clerk redirect configuration
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/
 ```
 
-> **Note:** Never commit `.env.local` to version control. It is already listed in `.gitignore`.
+> **Never commit `.env.local` to version control.** It is listed in `.gitignore`.
+
+---
+
+## Authentication Setup
+
+The entire application is protected by Clerk. All routes require a signed-in user; unauthenticated visitors are automatically redirected to `/sign-in`.
+
+### 1. Create a Clerk Application
+
+1. Go to [dashboard.clerk.com](https://dashboard.clerk.com) and click **Create application**.
+2. Give it a name (e.g. "Spare Parts Program").
+3. On the sign-in options screen, select **Google** (and optionally **Slack** — see below). Uncheck Email/Password if you want SSO-only login.
+4. Click **Create application**.
+
+### 2. Enable Google Sign-In (Required)
+
+Clerk handles the Google OAuth flow, but you need to supply your own Google OAuth credentials to use it in production (Clerk's shared dev credentials work for local testing).
+
+**Create Google OAuth credentials:**
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com) → **APIs & Services → Credentials**.
+2. Click **Create Credentials → OAuth 2.0 Client ID**.
+3. Application type: **Web application**.
+4. Under **Authorised redirect URIs**, add the callback URL shown in your Clerk dashboard (Clerk Dashboard → Configure → SSO Connections → Google → Redirect URI).
+5. Click **Create** — copy the **Client ID** and **Client Secret**.
+
+**Wire it into Clerk:**
+
+1. In Clerk Dashboard → **Configure → SSO Connections → Google**.
+2. Paste in the Client ID and Client Secret from Google Cloud Console.
+3. Save.
+
+### 3. Enable Slack Sign-In (Optional)
+
+1. Go to [api.slack.com/apps](https://api.slack.com/apps) → **Create New App → From Scratch**.
+2. Under **OAuth & Permissions**, add the redirect URI shown in your Clerk dashboard (Clerk Dashboard → Configure → SSO Connections → Slack → Redirect URI).
+3. Copy the **Client ID** and **Client Secret** from the Slack app's Basic Information page.
+4. In Clerk Dashboard → **Configure → SSO Connections → Slack** → paste in the credentials and save.
+
+### 4. Add Clerk Keys to .env.local
+
+1. In Clerk Dashboard → your app → **API Keys**.
+2. Copy the **Publishable Key** and **Secret Key**.
+3. Paste them into `.env.local` (replacing the placeholder values).
+4. Restart the dev server — Next.js does not hot-reload `.env.local` changes.
 
 ---
 
@@ -117,34 +177,37 @@ MONGODB_URI=mongodb+srv://...
 
 ```
 spare-parts-web-app/
+├── proxy.ts                         # Clerk auth enforcement (all routes protected)
 ├── app/
-│   ├── layout.tsx               # Root HTML layout, global font
-│   ├── page.tsx                 # Home / storefront (server component)
+│   ├── layout.tsx                   # Root HTML layout — wraps tree in ClerkProvider
+│   ├── page.tsx                     # Home / storefront (server component)
+│   ├── sign-in/[[...sign-in]]/
+│   │   └── page.tsx                 # Clerk sign-in page (catch-all for OAuth callbacks)
 │   ├── cart/
-│   │   └── page.tsx             # Cart + request submission form
+│   │   └── page.tsx                 # Cart + request submission form
 │   ├── orders/
-│   │   └── page.tsx             # Order history viewer
+│   │   └── page.tsx                 # Order history viewer
 │   ├── product/[model]/
-│   │   └── page.tsx             # Device detail + spare parts table
+│   │   └── page.tsx                 # Device detail + spare parts table
 │   ├── admin/
-│   │   ├── page.tsx             # Admin dashboard (add parts & devices)
+│   │   ├── page.tsx                 # Admin dashboard (add parts & devices)
 │   │   ├── edit-part/[id]/
-│   │   │   └── page.tsx         # Edit an individual spare part
+│   │   │   └── page.tsx             # Edit an individual spare part
 │   │   └── edit-product/[id]/
-│   │       └── page.tsx         # Edit an individual device
+│   │       └── page.tsx             # Edit an individual device
 │   └── api/
-│       ├── parts/               # GET (list) · POST (create)
-│       │   └── [id]/            # GET · PUT · DELETE
-│       ├── products/            # GET (list) · POST (create)
-│       │   └── [id]/            # GET · PUT · DELETE
-│       ├── cart/                # GET · POST · DELETE (clear)
-│       │   └── [productId]/     # PUT (quantity) · DELETE (remove item)
-│       ├── submissions/         # GET (all orders) · POST (submit)
-│       └── upload/              # POST (file upload, reserved for future use)
+│       ├── parts/                   # GET (list) · POST (create)
+│       │   └── [id]/                # GET · PUT · DELETE
+│       ├── products/                # GET (list) · POST (create)
+│       │   └── [id]/                # GET · PUT · DELETE
+│       ├── cart/                    # GET · POST · DELETE (clear)
+│       │   └── [productId]/         # PUT (quantity) · DELETE (remove item)
+│       ├── submissions/             # GET (all orders) · POST (submit)
+│       └── upload/                  # POST (file upload, reserved for future use)
 ├── components/
-│   ├── ProductsGrid.tsx         # Main storefront grid (devices + parts)
-│   ├── ProductDetail.tsx        # Spare parts table for a specific device
-│   ├── CsvImport.tsx            # Collapsible CSV bulk-import panel
+│   ├── ProductsGrid.tsx             # Main storefront grid (devices + parts)
+│   ├── ProductDetail.tsx            # Spare parts table for a specific device
+│   ├── CsvImport.tsx                # Collapsible CSV bulk-import panel
 │   └── ui/
 │       ├── CardActionButtons.tsx
 │       ├── FormActions.tsx
@@ -153,12 +216,12 @@ spare-parts-web-app/
 │       ├── StatusBadge.tsx
 │       └── StatusMessage.tsx
 ├── models/
-│   ├── Product.ts               # Mongoose schema for devices
-│   └── SparePart.ts             # Mongoose schema for spare parts
+│   ├── Product.ts                   # Mongoose schema for devices
+│   └── SparePart.ts                 # Mongoose schema for spare parts
 ├── lib/
-│   └── mongodb.ts               # Cached MongoDB connection
+│   └── mongodb.ts                   # Cached MongoDB connection
 └── public/
-    └── uploads/                 # Directory for any server-saved uploads
+    └── uploads/                     # Directory for any server-saved uploads
 ```
 
 ---
@@ -236,7 +299,7 @@ The cart is shared and persisted in MongoDB (there is a single global cart).
 
 ### Orders
 
-**URL:** `/orders`  
+**URL:** `/orders`
 Also accessible via **View Orders** in the Admin Dashboard.
 
 Displays all submitted spare parts requests, newest first.
@@ -463,6 +526,8 @@ createdAt            Date      — Auto-set by Mongoose timestamps
 ## API Reference
 
 All endpoints are under `/api/`. Request and response bodies are JSON unless otherwise noted.
+
+> **Note:** All API routes are protected by Clerk. Requests without a valid session cookie will receive a `401 Unauthorized` response.
 
 ### Parts
 
