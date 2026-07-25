@@ -1,4 +1,4 @@
-# Spare Parts Program
+# Verkada SPP (Spare Parts Program)
 
 An internal web application for managing, browsing, and requesting spare parts for devices. Built with Next.js, MongoDB, Tailwind CSS, and Clerk for authentication.
 
